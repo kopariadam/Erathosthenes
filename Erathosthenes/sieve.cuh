@@ -18,7 +18,7 @@ __host__ __device__ void sieve_impl(const Dimensions& dimensions, SieveParams& p
 	UNPACK_DIMENSIONS(dimensions);
 	auto primeIdx = params.startingPrimeIdx + (size_t)blockDim.x * (size_t)threadIdx.y + (size_t)threadIdx.x;
 	if (primeIdx >= params.knownPrimes.size) return;
-	auto step = params.knownPrimes[primeIdx];
+	size_t step = params.knownPrimes[primeIdx];
 
 	size_t numberIdx = blockIdx.x;
 	auto numberBlockSize = params.result.size / gridDim.x;
