@@ -24,11 +24,10 @@ public:
 		return end + OVER_RESERVE <= &cache.back();
 	}
 
-	FastStringStream& operator<<(const char *s)
+	void write(const char *s, int len)
 	{
 		strcpy(end, s);
-		end += strlen(s);
-		return *this;
+		end += len;
 	}
 
 	void reset()
@@ -87,8 +86,8 @@ public:
 				if (print_to_file)
 				{
 					char buffer[FastStringStream::OVER_RESERVE];
-					std::sprintf(buffer, "%llu ", i);
-					cache << buffer;
+					int length = std::sprintf(buffer, "%llu ", i);
+					cache.write(buffer, length);
 					if (!cache.canFit())
 						writeToFile();
 					else
