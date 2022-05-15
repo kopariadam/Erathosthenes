@@ -24,7 +24,7 @@ public:
 		return end + OVER_RESERVE <= &cache.back();
 	}
 
-	void write(const char *s, int len)
+	void write(const char *s, size_t len)
 	{
 		strcpy(end, s);
 		end += len;
