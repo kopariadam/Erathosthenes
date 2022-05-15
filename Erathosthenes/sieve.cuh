@@ -59,8 +59,8 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 	}
 	if (gpu_enabled)
 	{
-		constexpr auto BLOCK_COUNT = 1 << 20;
-		constexpr auto BLOCK_SIZE = 16;
+		constexpr auto BLOCK_COUNT = 1u << 20;
+		constexpr auto BLOCK_SIZE = 16u;
 
 		std::cout << "Copying arrays to GPU" << std::endl;
 		cudaSetDevice(0);
@@ -96,8 +96,8 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 	}
 	else
 	{
-		//constexpr auto BLOCK_COUNT = 1;
-		constexpr auto BLOCK_SIZE = 8;
+		//constexpr auto BLOCK_COUNT = 1u;
+		constexpr auto BLOCK_SIZE = 8u;
 
 		for (auto i = 0u; i < known_primes.size(); i += BLOCK_SIZE)
 		{
