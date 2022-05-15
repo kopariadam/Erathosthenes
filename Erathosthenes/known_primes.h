@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <iostream>
+#include "parameters.cuh"
 
 std::vector<size_t> get_known_primes(size_t limit)
 {
@@ -26,4 +27,13 @@ std::vector<size_t> get_known_primes(size_t limit)
 	}
 	std::cout << std::endl << "Base primes calculated, size: " << knownPrimes.size() << std::endl;
 	return knownPrimes;
+}
+
+void update_known_primes(std::vector<size_t>& known_primes, const Array<bool>& result, size_t limit)
+{
+	for (size_t i = known_primes.back(); i < limit; i++)
+	{
+		if (result[i])
+			known_primes.push_back(i);
+	}
 }

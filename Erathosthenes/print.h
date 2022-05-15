@@ -72,21 +72,22 @@ public:
 	}
 
 	template<bool print_to_file>
-	void print(const Array<bool> result)
+	void print(const Array<bool> result, size_t offset)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 
 		std::cout << "Printing results to file" << std::endl;
 		for (auto i = 0ull; i < result.size; i++)
 		{
-			if (i % COUT_SAMPLING_RATE == 0) coutPrint = true;
+			size_t number = i + offset;
+			if (number % COUT_SAMPLING_RATE == 0) coutPrint = true;
 			if (result[i])
 			{
 				count++;
 				if (print_to_file)
 				{
 					char buffer[FastStringStream::OVER_RESERVE];
-					int length = std::sprintf(buffer, "%llu ", i);
+					int length = std::sprintf(buffer, "%llu ", number);
 					cache.write(buffer, length);
 					if (!cache.canFit())
 						writeToFile();
@@ -96,7 +97,7 @@ public:
 				if (coutPrint)
 				{
 					coutPrint = false;
-					std::cout << i << " ";
+					std::cout << number << " ";
 				}
 			}
 		}

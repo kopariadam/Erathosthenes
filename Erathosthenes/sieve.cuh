@@ -8,6 +8,7 @@
 struct SieveParams
 {
 	Array<bool> result;
+	size_t offset;
 	const Array<size_t> knownPrimes;
 	size_t startingPrimeIdx;
 };
@@ -21,9 +22,10 @@ __host__ __device__ void sieve_impl(const Dimensions& dimensions, SieveParams& p
 
 	size_t numberIdx = blockIdx.x;
 	auto numberBlockSize = params.result.size / gridDim.x;
-	auto startingNumber = numberBlockSize * numberIdx;
+	auto startingNumber = numberBlockSize * numberIdx + params.offset;
 	if (startingNumber > 0)
 		startingNumber = ((startingNumber - 1) / step + 1) * step;
+	startingNumber -= params.offset;
 	auto endingNumber = numberBlockSize * (numberIdx + 1);
 
 	for (auto i = startingNumber; i < endingNumber; i += step)
@@ -43,13 +45,16 @@ THREADABLE_FUNCTION_START(sieve_host, SieveParams params)
 THREADABLE_FUNCTION_END
 
 template<bool gpu_enabled>
-void sieve(Array<bool> result, std::vector<size_t>& known_primes)
+void sieve(Array<bool> result, size_t offset, std::vector<size_t>& known_primes)
 {
 	auto startTime = std::chrono::high_resolution_clock::now();
 
 	memset(result.ptr, 1, result.size * sizeof(result[0]));
-	result[0] = false;
-	result[1] = false;
+	if (offset == 0ull)
+	{
+		result[0] = false;
+		result[1] = false;
+	}
 	if (gpu_enabled)
 	{
 		constexpr auto BLOCK_COUNT = 1ll << 20;
@@ -72,7 +77,7 @@ void sieve(Array<bool> result, std::vector<size_t>& known_primes)
 			std::cout << "Calculating " << i << std::endl;
 			auto grid = dim3(BLOCK_COUNT);
 			auto block = dim3(BLOCK_SIZE, BLOCK_SIZE);
-			SieveParams params{ Array<bool>{cudaResult, result.size}, Array<size_t>{cudaKnownPrimes, known_primes.size()}, i};
+			SieveParams params{ Array<bool>{cudaResult, result.size}, offset, Array<size_t>{cudaKnownPrimes, known_primes.size()}, i};
 			sieve_cuda <<< grid, block >>>(params);
 			CUDA_STATUS_CHECK(cudaGetLastError());
 			CUDA_STATUS_CHECK(cudaDeviceSynchronize());
@@ -95,13 +100,13 @@ void sieve(Array<bool> result, std::vector<size_t>& known_primes)
 		for (auto i = 0u; i < known_primes.size(); i += BLOCK_SIZE)
 		{
 			std::cout << "Calculating " << i << std::endl;
-			SieveParams params{ result, Array<size_t>::from_vector(known_primes), i };
+			SieveParams params{ result, offset, Array<size_t>::from_vector(known_primes), i };
 			THREADABLE_CALL(BLOCK_SIZE, sieve_host, params);
 		}
 		std::cout << "Calculation done" << std::endl;
 	}
 
 	auto endTime = std::chrono::high_resolution_clock::now();
-	auto calculationTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+	auto calculationTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 	std::cout << "Calculation took " << calculationTime << "ms" << std::endl;
 }
