@@ -9,7 +9,7 @@ struct SieveParams
 {
 	Array<bool> result;
 	size_t offset;
-	const Array<size_t> knownPrimes;
+	const Array<uint32_t> knownPrimes;
 	size_t startingPrimeIdx;
 };
 
@@ -24,11 +24,11 @@ __host__ __device__ void sieve_impl(const Dimensions& dimensions, SieveParams& p
 	auto numberBlockSize = params.result.size / gridDim.x;
 	auto startingNumber = numberBlockSize * numberIdx + params.offset;
 	if (startingNumber > step)
-		startingNumber = ((startingNumber - 1) / step + 1) * step;
+		startingNumber = ((startingNumber - 1ull) / step + 1ull) * step;
 	else
-		startingNumber = step * 2;
+		startingNumber = step * 2ull;
 	startingNumber -= params.offset;
-	auto endingNumber = numberBlockSize * (numberIdx + 1);
+	auto endingNumber = numberBlockSize * (numberIdx + 1ull);
 
 	for (auto i = startingNumber; i < endingNumber; i += step)
 		params.result[i] = false;
@@ -47,7 +47,7 @@ THREADABLE_FUNCTION_START(sieve_host, SieveParams params)
 THREADABLE_FUNCTION_END
 
 template<bool gpu_enabled>
-void sieve(Array<bool> result, size_t offset, std::vector<size_t>& known_primes)
+void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_primes)
 {
 	auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -59,13 +59,13 @@ void sieve(Array<bool> result, size_t offset, std::vector<size_t>& known_primes)
 	}
 	if (gpu_enabled)
 	{
-		constexpr auto BLOCK_COUNT = 1ll << 20;
-		constexpr auto BLOCK_SIZE = 16ll;
+		constexpr auto BLOCK_COUNT = 1 << 20;
+		constexpr auto BLOCK_SIZE = 16;
 
 		std::cout << "Copying arrays to GPU" << std::endl;
 		cudaSetDevice(0);
 
-		size_t* cudaKnownPrimes;
+		uint32_t* cudaKnownPrimes;
 		CUDA_STATUS_CHECK(cudaMalloc(&cudaKnownPrimes, known_primes.size() * sizeof(known_primes[0])));
 		CUDA_STATUS_CHECK(cudaMemcpy(cudaKnownPrimes, known_primes.data(), known_primes.size() * sizeof(known_primes[0]), cudaMemcpyHostToDevice));
 
@@ -79,7 +79,7 @@ void sieve(Array<bool> result, size_t offset, std::vector<size_t>& known_primes)
 			std::cout << "Calculating " << i << std::endl;
 			auto grid = dim3(BLOCK_COUNT);
 			auto block = dim3(BLOCK_SIZE, BLOCK_SIZE);
-			SieveParams params{ Array<bool>{cudaResult, result.size}, offset, Array<size_t>{cudaKnownPrimes, known_primes.size()}, i};
+			SieveParams params{ Array<bool>{cudaResult, result.size}, offset, Array<uint32_t>{cudaKnownPrimes, known_primes.size()}, i};
 			sieve_cuda <<< grid, block >>>(params);
 			CUDA_STATUS_CHECK(cudaGetLastError());
 			CUDA_STATUS_CHECK(cudaDeviceSynchronize());
@@ -96,13 +96,13 @@ void sieve(Array<bool> result, size_t offset, std::vector<size_t>& known_primes)
 	}
 	else
 	{
-		//constexpr auto BLOCK_COUNT = 1ll;
-		constexpr auto BLOCK_SIZE = 8ll;
+		//constexpr auto BLOCK_COUNT = 1;
+		constexpr auto BLOCK_SIZE = 8;
 
 		for (auto i = 0u; i < known_primes.size(); i += BLOCK_SIZE)
 		{
 			std::cout << "Calculating " << i << std::endl;
-			SieveParams params{ result, offset, Array<size_t>::from_vector(known_primes), i };
+			SieveParams params{ result, offset, Array<uint32_t>::from_vector(known_primes), i };
 			THREADABLE_CALL(BLOCK_SIZE, sieve_host, params);
 		}
 		std::cout << "Calculation done" << std::endl;

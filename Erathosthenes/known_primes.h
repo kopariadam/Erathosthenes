@@ -2,12 +2,14 @@
 #include <vector>
 #include <iostream>
 #include "parameters.cuh"
+#include <math.h>
 
-std::vector<size_t> get_known_primes(size_t limit)
+std::vector<uint32_t> get_known_primes(size_t limit)
 {
 	std::cout << "Calculating base primes" << std::endl;
 
-	auto knownPrimes = std::vector<size_t>();
+	auto knownPrimes = std::vector<uint32_t>();
+	knownPrimes.reserve(limit / log(limit));
 	knownPrimes.push_back(2u);
 	for (auto i = 3u; i < limit; i += 2u)
 	{
@@ -29,9 +31,10 @@ std::vector<size_t> get_known_primes(size_t limit)
 	return knownPrimes;
 }
 
-void update_known_primes(std::vector<size_t>& known_primes, const Array<bool>& result, size_t limit)
+void update_known_primes(std::vector<uint32_t>& known_primes, const Array<bool>& result, size_t limit)
 {
-	for (size_t i = known_primes.back() + 2; i < limit; i += 2)
+	known_primes.reserve(limit / log(limit));
+	for (auto i = known_primes.back() + 2u; i < limit; i += 2u)
 	{
 		if (result[i])
 			known_primes.push_back(i);
