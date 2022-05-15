@@ -5,41 +5,65 @@
 #include <iomanip>
 #include <string>
 
-template<bool print_to_file>
-void print(const Array<bool> result)
+class Printer
 {
-	constexpr auto PRIMES_PER_FILE = 1ll << 21;
-	constexpr auto COUT_SAMPLING_RATE = 1ll << 24;
+	static constexpr auto PRIMES_PER_FILE = 1ll << 21;
+	static constexpr auto COUT_SAMPLING_RATE = 1ll << 24;
+	static constexpr auto FILE_PADDING = 4;
 
-	std::cout << "Printing results to file" << std::endl;
-	std::ofstream file;
-	auto count = 0ull;
-	auto coutPrint = false;
-	for (auto i = 0ull; i < result.size; i++)
+	size_t count = 0ull;
+	bool coutPrint = false;
+	std::stringstream cache;
+	bool needsToWriteToFile = false;
+	int fileIndex = 0;
+
+	void writeToFile()
 	{
-		if (i % COUT_SAMPLING_RATE == 0) coutPrint = true;
-		if (result[i])
+		if (!needsToWriteToFile)
+			return;
+
+		std::stringstream ss;
+		ss << std::setw(FILE_PADDING) << std::setfill('0') << std::to_string(fileIndex);
+		std::ofstream file;
+		file = std::ofstream("../output/prime_" + ss.str() + ".txt");
+		file << cache.str();
+		file.close();
+		fileIndex++;
+		cache = {};
+		needsToWriteToFile = false;
+	}
+
+public:
+	~Printer()
+	{
+		writeToFile();
+	}
+
+	template<bool print_to_file>
+	void print(const Array<bool> result)
+	{
+		std::cout << "Printing results to file" << std::endl;
+		for (auto i = 0ull; i < result.size; i++)
 		{
-			if (print_to_file)
+			if (i % COUT_SAMPLING_RATE == 0) coutPrint = true;
+			if (result[i])
 			{
-				if (count % PRIMES_PER_FILE == 0)
+				count++;
+				if (print_to_file)
 				{
-					if (file.is_open())
-						file.close();
-					std::stringstream ss;
-					ss << std::setw(4) << std::setfill('0') << std::to_string(count / PRIMES_PER_FILE);
-					file = std::ofstream("../output/prime_" + ss.str() + ".txt");
+					cache << i << " ";
+					if (count % PRIMES_PER_FILE == 0)
+						writeToFile();
+					else
+						needsToWriteToFile = true;
 				}
-				file << i << " ";
-			}
-			count++;
-			if (coutPrint)
-			{
-				coutPrint = false;
-				std::cout << i << " ";
+				if (coutPrint)
+				{
+					coutPrint = false;
+					std::cout << i << " ";
+				}
 			}
 		}
+		std::cout << std::endl << "Printing done, count: " << count << std::endl;
 	}
-	if (file.is_open()) file.close();
-	std::cout << std::endl << "Printing done, count: " << count << std::endl;
-}
+};

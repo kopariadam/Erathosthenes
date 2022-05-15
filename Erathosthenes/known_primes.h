@@ -24,5 +24,6 @@ std::vector<size_t> get_known_primes(size_t limit)
 			knownPrimes.push_back(i);
 		}
 	}
+	std::cout << std::endl << "Base primes calculated, size: " << knownPrimes.size() << std::endl;
 	return knownPrimes;
 }
