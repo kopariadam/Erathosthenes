@@ -19,15 +19,13 @@ public:
 		reset();
 	}
 
-	bool canFit()
-	{
-		return end + OVER_RESERVE <= &cache.back();
-	}
+	bool canFit() { return end + OVER_RESERVE <= &cache.back(); }
+	const char* c_str() { return cache.data(); }
 
-	void write(const char *s, size_t len)
+	void write(size_t number)
 	{
-		strcpy(end, s);
-		end += len;
+		int length = std::sprintf(end, "%llu ", number);
+		end += length;
 	}
 
 	void reset()
@@ -36,10 +34,6 @@ public:
 		end = cache.data();
 	}
 
-	const char* c_str()
-	{
-		return cache.data();
-	}
 };
 
 class Printer
@@ -80,10 +74,7 @@ public:
 		if (offset == 0ull)
 		{
 			if (print_to_file)
-			{
-				auto two = "2 ";
-				cache.write(two, strlen(two));
-			}
+				cache.write(2ull);
 			count++;
 		}
 
@@ -96,9 +87,7 @@ public:
 				count++;
 				if (print_to_file)
 				{
-					char buffer[FastStringStream::OVER_RESERVE];
-					int length = std::sprintf(buffer, "%llu ", number);
-					cache.write(buffer, length);
+					cache.write(number);
 					if (!cache.canFit())
 						writeToFile();
 					else
