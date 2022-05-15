@@ -3,6 +3,7 @@
 #include "device_launch_parameters.h"
 #include "threadable_function.h"
 #include "parameters.cuh"
+#include <chrono>
 
 struct SieveParams
 {
@@ -44,6 +45,8 @@ THREADABLE_FUNCTION_END
 template<bool gpu_enabled>
 void sieve(Array<bool> result, std::vector<size_t>& known_primes)
 {
+	auto startTime = std::chrono::high_resolution_clock::now();
+
 	memset(result.ptr, 1, result.size * sizeof(result[0]));
 	result[0] = false;
 	result[1] = false;
@@ -86,7 +89,7 @@ void sieve(Array<bool> result, std::vector<size_t>& known_primes)
 	}
 	else
 	{
-		constexpr auto BLOCK_COUNT = 1ll;
+		//constexpr auto BLOCK_COUNT = 1ll;
 		constexpr auto BLOCK_SIZE = 8ll;
 
 		for (auto i = 0u; i < known_primes.size(); i += BLOCK_SIZE)
@@ -97,4 +100,8 @@ void sieve(Array<bool> result, std::vector<size_t>& known_primes)
 		}
 		std::cout << "Calculation done" << std::endl;
 	}
+
+	auto endTime = std::chrono::high_resolution_clock::now();
+	auto calculationTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+	std::cout << "Calculation took " << calculationTime << "ms" << std::endl;
 }

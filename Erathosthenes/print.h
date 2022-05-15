@@ -5,18 +5,57 @@
 #include <iomanip>
 #include <string>
 
+class FastStringStream
+{
+	std::vector<char> cache;
+	char* end;
+
+public:
+	static constexpr auto OVER_RESERVE = 65ull;
+
+	FastStringStream(size_t size)
+	{
+		cache.resize(size + OVER_RESERVE);
+		reset();
+	}
+
+	bool canFit()
+	{
+		return end + OVER_RESERVE <= &cache.back();
+	}
+
+	FastStringStream& operator<<(const char *s)
+	{
+		strcpy(end, s);
+		end += strlen(s);
+		return *this;
+	}
+
+	void reset()
+	{
+		cache[0] = '\0';
+		end = cache.data();
+	}
+
+	const char* c_str()
+	{
+		return cache.data();
+	}
+};
+
 class Printer
 {
-	static constexpr auto PRIMES_PER_FILE = 1ll << 21;
+	static constexpr auto FILE_LENGHT = 1ll << 24;
 	static constexpr auto COUT_SAMPLING_RATE = 1ll << 24;
 	static constexpr auto FILE_PADDING = 4;
 
 	size_t count = 0ull;
 	bool coutPrint = false;
-	std::stringstream cache;
+	FastStringStream cache{ FILE_LENGHT };
 	bool needsToWriteToFile = false;
 	int fileIndex = 0;
 
+public:
 	void writeToFile()
 	{
 		if (!needsToWriteToFile)
@@ -26,22 +65,18 @@ class Printer
 		ss << std::setw(FILE_PADDING) << std::setfill('0') << std::to_string(fileIndex);
 		std::ofstream file;
 		file = std::ofstream("../output/prime_" + ss.str() + ".txt");
-		file << cache.str();
+		file << cache.c_str();
 		file.close();
 		fileIndex++;
-		cache = {};
+		cache.reset();
 		needsToWriteToFile = false;
-	}
-
-public:
-	~Printer()
-	{
-		writeToFile();
 	}
 
 	template<bool print_to_file>
 	void print(const Array<bool> result)
 	{
+		auto startTime = std::chrono::high_resolution_clock::now();
+
 		std::cout << "Printing results to file" << std::endl;
 		for (auto i = 0ull; i < result.size; i++)
 		{
@@ -51,8 +86,10 @@ public:
 				count++;
 				if (print_to_file)
 				{
-					cache << i << " ";
-					if (count % PRIMES_PER_FILE == 0)
+					char buffer[FastStringStream::OVER_RESERVE];
+					std::sprintf(buffer, "%llu ", i);
+					cache << buffer;
+					if (!cache.canFit())
 						writeToFile();
 					else
 						needsToWriteToFile = true;
@@ -65,5 +102,8 @@ public:
 			}
 		}
 		std::cout << std::endl << "Printing done, count: " << count << std::endl;
+		auto endTime = std::chrono::high_resolution_clock::now();
+		auto calculationTime = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime).count();
+		std::cout << "Printing took " << calculationTime << "s" << std::endl;
 	}
 };

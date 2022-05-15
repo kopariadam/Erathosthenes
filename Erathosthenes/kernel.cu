@@ -1,32 +1,32 @@
 ﻿#include "known_primes.h"
 #include "sieve.cuh"
 #include "print.h"
-#include <chrono>
 
 #define GPU_ENABLED 1
 #define PRINT_TO_FILE 1
 
+constexpr size_t two_factor_sqrt(size_t n, size_t s = 0)
+{
+	size_t i = 1ull << s;
+	return i * i >= n ? i : two_factor_sqrt(n, s + 1);
+}
+
 int main()
 {
-	constexpr auto SIZE_SHIFT = 32;
-	constexpr auto ARRAY_SIZE = 1ll << SIZE_SHIFT;
-	constexpr auto KNOWN_PRIME_LIMIT = 1ll << (SIZE_SHIFT / 2);
+	constexpr auto ARRAY_SIZE = 1ull << 32;
+	constexpr auto FINAL_NUMBER = 1ull << 32;
 
-	auto knownPrimes = get_known_primes(KNOWN_PRIME_LIMIT);
+	auto knownPrimes = get_known_primes(two_factor_sqrt(ARRAY_SIZE));
 	Array<bool> result;
 	result.ptr = (bool*)malloc(ARRAY_SIZE);
 	result.size = ARRAY_SIZE;
+	Printer printer;
+	for (auto offset = 0ull; offset < FINAL_NUMBER; offset += ARRAY_SIZE)
 	{
-		Printer printer;
-		
-		auto startTime = std::chrono::high_resolution_clock::now();
-		sieve<GPU_ENABLED>(result, knownPrimes);
-		auto endTime = std::chrono::high_resolution_clock::now();
-		auto calculationTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
-		std::cout << "Took " << calculationTime << "ms" << std::endl;
-
-		printer.print<PRINT_TO_FILE>(result);
+		sieve<GPU_ENABLED>(result, /*offset,*/ knownPrimes/*, two_factor_sqrt(FINAL_NUMBER)*/);
+		printer.print<PRINT_TO_FILE>(result/*, offset*/);
 	}
+	printer.writeToFile();
 	free(result.ptr);
 
 	return 0;
