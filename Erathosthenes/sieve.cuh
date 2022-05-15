@@ -23,8 +23,10 @@ __host__ __device__ void sieve_impl(const Dimensions& dimensions, SieveParams& p
 	size_t numberIdx = blockIdx.x;
 	auto numberBlockSize = params.result.size / gridDim.x;
 	auto startingNumber = numberBlockSize * numberIdx + params.offset;
-	if (startingNumber > 0)
+	if (startingNumber > step)
 		startingNumber = ((startingNumber - 1) / step + 1) * step;
+	else
+		startingNumber = step * 2;
 	startingNumber -= params.offset;
 	auto endingNumber = numberBlockSize * (numberIdx + 1);
 

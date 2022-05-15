@@ -31,7 +31,7 @@ std::vector<size_t> get_known_primes(size_t limit)
 
 void update_known_primes(std::vector<size_t>& known_primes, const Array<bool>& result, size_t limit)
 {
-	for (size_t i = known_primes.back(); i < limit; i++)
+	for (size_t i = known_primes.back() + 2; i < limit; i += 2)
 	{
 		if (result[i])
 			known_primes.push_back(i);

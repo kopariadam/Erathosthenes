@@ -75,12 +75,22 @@ public:
 	void print(const Array<bool> result, size_t offset)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
-
 		std::cout << "Printing results to file" << std::endl;
-		for (auto i = 0ull; i < result.size; i++)
+
+		if (offset == 0ull)
+		{
+			if (print_to_file)
+			{
+				auto two = "2 ";
+				cache.write(two, strlen(two));
+			}
+			count++;
+		}
+
+		for (auto i = 1ull; i < result.size; i += 2)
 		{
 			size_t number = i + offset;
-			if (number % COUT_SAMPLING_RATE == 0) coutPrint = true;
+			if (number % COUT_SAMPLING_RATE == 1) coutPrint = true;
 			if (result[i])
 			{
 				count++;
