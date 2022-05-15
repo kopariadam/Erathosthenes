@@ -28,7 +28,7 @@ void print(const Array<bool> result)
 						file.close();
 					std::stringstream ss;
 					ss << std::setw(4) << std::setfill('0') << std::to_string(count / PRIMES_PER_FILE);
-					file = std::ofstream("output/prime_" + ss.str() + ".txt");
+					file = std::ofstream("../output/prime_" + ss.str() + ".txt");
 				}
 				file << i << " ";
 			}
