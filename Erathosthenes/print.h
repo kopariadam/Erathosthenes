@@ -98,7 +98,7 @@ public:
 				if (coutPrint)
 				{
 					coutPrint = false;
-					char buffer[65];
+					char buffer[FastStringStream::OVER_RESERVE];
 					fastsprintf(buffer, number, index);
 					std::cout << buffer;
 				}
