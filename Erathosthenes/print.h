@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include "fastprintf.h"
 
 class FastStringStream
 {
@@ -22,10 +23,9 @@ public:
 	bool canFit() { return end + OVER_RESERVE <= &cache.back(); }
 	const char* c_str() { return cache.data(); }
 
-	void write(size_t number)
+	void write(size_t number, int index)
 	{
-		int length = std::sprintf(end, "%llu ", number);
-		end += length;
+		end = fastsprintf(end, number, index);
 	}
 
 	void reset()
@@ -74,9 +74,11 @@ public:
 		if (offset == 0ull)
 		{
 			if (print_to_file)
-				cache.write(2ull);
+				cache.write(2ull, get_index(2ull));
 			count++;
 		}
+
+		auto index = get_index(offset + result.size);
 
 		for (auto i = 1ull; i < result.size; i += 2)
 		{
@@ -87,7 +89,7 @@ public:
 				count++;
 				if (print_to_file)
 				{
-					cache.write(number);
+					cache.write(number, index);
 					if (!cache.canFit())
 						writeToFile();
 					else
@@ -96,7 +98,9 @@ public:
 				if (coutPrint)
 				{
 					coutPrint = false;
-					std::cout << number << " ";
+					char buffer[65];
+					fastsprintf(buffer, number, index);
+					std::cout << buffer;
 				}
 			}
 		}
