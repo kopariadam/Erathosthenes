@@ -56,8 +56,7 @@ public:
 
 		std::stringstream ss;
 		ss << std::setw(FILE_PADDING) << std::setfill('0') << std::to_string(fileIndex);
-		std::ofstream file;
-		file = std::ofstream("../output/prime_" + ss.str() + ".txt");
+		std::ofstream file = std::ofstream("../output/prime_" + ss.str() + ".txt", std::ios_base::out | std::ios_base::binary);
 		file << cache.c_str();
 		file.close();
 		fileIndex++;
