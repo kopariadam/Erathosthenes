@@ -49,6 +49,10 @@ class Printer
 	int fileIndex = 0;
 
 public:
+	Printer()
+	{
+		_wmkdir(L"../output");
+	}
 	void writeToFile()
 	{
 		if (!needsToWriteToFile)
