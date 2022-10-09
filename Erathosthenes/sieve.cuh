@@ -52,12 +52,6 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 {
 	auto startTime = std::chrono::high_resolution_clock::now();
 
-	memset(result.ptr, 1, result.size * sizeof(result[0]));
-	if (offset == 0ull)
-	{
-		result[0] = false;
-		result[1] = false;
-	}
 	if (gpu_enabled)
 	{
 		compute_log << "Copying arrays to GPU\n";
@@ -69,7 +63,7 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 
 		bool* cudaResult;
 		CUDA_STATUS_CHECK(cudaMalloc(&cudaResult, result.size));
-		CUDA_STATUS_CHECK(cudaMemcpy(cudaResult, result.ptr, result.size * sizeof(result[0]), cudaMemcpyHostToDevice));
+		CUDA_STATUS_CHECK(cudaMemset(cudaResult, 1, result.size * sizeof(result[0])));
 		compute_log << "Arrays copied to GPU\n";
 
 		for (auto i = 0u; i < known_primes.size(); i += BLOCK_SIZE * BLOCK_SIZE)
@@ -94,6 +88,7 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 	}
 	else
 	{
+		memset(result.ptr, 1, result.size * sizeof(result[0]));
 		for (auto i = 0u; i < known_primes.size(); i += THREAD_COUNT)
 		{
 			compute_log << "Calculating " << i << "\n";
@@ -101,6 +96,11 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 			THREADABLE_CALL(THREAD_COUNT, sieve_host, params); //BLOCK_CLOUNT = 1
 		}
 		compute_log << "Calculation done" << "\n";
+	}
+	if (offset == 0ull)
+	{
+		result[0] = false;
+		result[1] = false;
 	}
 
 	auto endTime = std::chrono::high_resolution_clock::now();
