@@ -1,9 +1,11 @@
 #pragma once
-#include <iostream>
 #include "fastprintf.h"
 #include <memory>
 #include "file.h"
 #include "parameters.cuh"
+#include "logger.h"
+#include "hardware_defines.h"
+#include "config.h"
 
 class FastStringStream
 {
@@ -35,11 +37,8 @@ public:
 
 };
 
-class Printer
+class SingleThreadedPrinter
 {
-	static constexpr auto FILE_LENGHT = 1ll << 24;
-	static constexpr auto COUT_SAMPLING_RATE = 1ll << 24;
-
 	size_t count = 0ull;
 	bool coutPrint = false;
 	FastStringStream cache{ FILE_LENGHT };
@@ -49,7 +48,7 @@ class Printer
 	std::unique_ptr<FileBase> fileMaker;
 
 public:
-	Printer(std::unique_ptr<FileBase>&& file_maker = std::make_unique<SingleThreadedFile>()) : fileMaker(std::move(file_maker))
+	SingleThreadedPrinter(std::unique_ptr<FileBase>&& file_maker = std::make_unique<SingleThreadedFile>()) : fileMaker(std::move(file_maker))
 	{
 		fileMaker->makeFolder();
 	}
@@ -70,7 +69,7 @@ public:
 	void print(const Array<bool> result, size_t offset)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
-		std::cout << "Printing results to file" << std::endl;
+		printer_log << "Printing results to file\n";
 
 		if (offset == 0ull)
 		{
@@ -101,13 +100,13 @@ public:
 					coutPrint = false;
 					char buffer[FastStringStream::OVER_RESERVE];
 					fastsprintf(buffer, number, index);
-					std::cout << buffer;
+					printer_log << buffer;
 				}
 			}
 		}
-		std::cout << std::endl << "Printing done, count: " << count << std::endl;
+		printer_log << "\nPrinting done, count: " << count << "\n";
 		auto endTime = std::chrono::high_resolution_clock::now();
 		auto calculationTime = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime).count();
-		std::cout << "Printing took " << calculationTime << "s" << std::endl;
+		printer_log << "Printing took " << calculationTime << "s\n";
 	}
 };

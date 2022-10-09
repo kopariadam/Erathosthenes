@@ -1,4 +1,5 @@
 #pragma once
+#include "hardware_defines.h"
 #include "print.h"
 #include <thread>
 #include <array>
@@ -6,14 +7,13 @@
 template<bool print_to_file>
 void print_part(int pass, int thread, const Array<bool> result, size_t offset)
 {
-	Printer printer{std::make_unique<MultiThreadedFile>(pass, thread)};
+	SingleThreadedPrinter printer{ std::make_unique<MultiThreadedFile>(pass, thread) };
 	printer.print<print_to_file>(result, offset);
 	printer.writeToFile();
 }
 
 class MultiThreadedPrinter
 {
-	static constexpr auto THREAD_COUNT = 8;
 	int pass = 0;
 	std::array<std::thread, THREAD_COUNT> threads;
 	bool threadsStarted = false;
@@ -45,3 +45,9 @@ public:
 		}
 	}
 };
+
+#if MULTI_THREADED_PRINTER
+using Printer = MultiThreadedPrinter;
+#else
+using Printer = SingleThreadedPrinter;
+#endif

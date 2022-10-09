@@ -6,8 +6,6 @@
 
 class FileBase
 {
-protected:
-	static constexpr auto FILE_PADDING = 4;
 public:
 	void makeFolder()
 	{
@@ -16,21 +14,23 @@ public:
 	virtual std::ofstream makeFile(int index) = 0;
 };
 
+constexpr auto PASS_PADDING = get_padding(SIEVE_CALLS);
+constexpr auto THREAD_PADDING = get_padding(THREAD_COUNT);
+constexpr auto COMBINED_PADDING = FILE_PADDING + PASS_PADDING + THREAD_PADDING;
+
 class SingleThreadedFile : public FileBase
 {
 public:
 	std::ofstream makeFile(int index) override
 	{
 		std::stringstream ss;
-		ss << std::setw(FILE_PADDING) << std::setfill('0') << std::to_string(index);
+		ss << std::setw(COMBINED_PADDING) << std::setfill('0') << std::to_string(index);
 		return std::ofstream("../output/prime_" + ss.str() + ".txt", std::ios_base::out | std::ios_base::binary);
 	}
 };
 
 class MultiThreadedFile : public FileBase
 {
-	static constexpr auto PASS_PADDING = 2;
-	static constexpr auto THREAD_PADDING = 2;
 	int pass, thread;
 public:
 	MultiThreadedFile(int pass_, int thread_) : pass(pass_), thread(thread_) {}

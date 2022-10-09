@@ -82,14 +82,20 @@
     <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="fastprintf.h" />
     <ClInclude Include="file.h" />
+    <ClInclude Include="hardware_defines.h" />
     <ClInclude Include="known_primes.h" />
+    <ClInclude Include="logger.h" />
     <ClInclude Include="multi_threaded_print.h" />
     <ClInclude Include="parameters.cuh" />
     <ClInclude Include="print.h" />
     <ClInclude Include="sieve.cuh" />
     <ClInclude Include="threadable_function.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="logger.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

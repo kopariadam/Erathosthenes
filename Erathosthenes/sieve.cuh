@@ -1,4 +1,5 @@
 #pragma once
+#include "hardware_defines.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "threadable_function.h"
@@ -59,10 +60,7 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 	}
 	if (gpu_enabled)
 	{
-		constexpr auto BLOCK_COUNT = 1u << 20;
-		constexpr auto BLOCK_SIZE = 16u;
-
-		std::cout << "Copying arrays to GPU" << std::endl;
+		compute_log << "Copying arrays to GPU\n";
 		cudaSetDevice(0);
 
 		uint32_t* cudaKnownPrimes;
@@ -72,11 +70,11 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 		bool* cudaResult;
 		CUDA_STATUS_CHECK(cudaMalloc(&cudaResult, result.size));
 		CUDA_STATUS_CHECK(cudaMemcpy(cudaResult, result.ptr, result.size * sizeof(result[0]), cudaMemcpyHostToDevice));
-		std::cout << "Arrays copied to GPU" << std::endl;
+		compute_log << "Arrays copied to GPU\n";
 
 		for (auto i = 0u; i < known_primes.size(); i += BLOCK_SIZE * BLOCK_SIZE)
 		{
-			std::cout << "Calculating " << i << std::endl;
+			compute_log << "Calculating " << i << "\n";
 			auto grid = dim3(BLOCK_COUNT);
 			auto block = dim3(BLOCK_SIZE, BLOCK_SIZE);
 			SieveParams params{ Array<bool>{cudaResult, result.size}, offset, Array<uint32_t>{cudaKnownPrimes, known_primes.size()}, i};
@@ -84,11 +82,11 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 			CUDA_STATUS_CHECK(cudaGetLastError());
 			CUDA_STATUS_CHECK(cudaDeviceSynchronize());
 		}
-		std::cout << "Calculation done" << std::endl;
+		compute_log << "Calculation done\n";
 
-		std::cout << "Copying back result" << std::endl;
+		compute_log << "Copying back result\n";
 		CUDA_STATUS_CHECK(cudaMemcpy(result.ptr, cudaResult, result.size * sizeof(result[0]), cudaMemcpyDeviceToHost));
-		std::cout << "Copying back done" << std::endl;
+		compute_log << "Copying back done\n";
 
 		CUDA_STATUS_CHECK(cudaFree(cudaKnownPrimes));
 		CUDA_STATUS_CHECK(cudaFree(cudaResult));
@@ -96,19 +94,16 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 	}
 	else
 	{
-		//constexpr auto BLOCK_COUNT = 1u;
-		constexpr auto BLOCK_SIZE = 8u;
-
-		for (auto i = 0u; i < known_primes.size(); i += BLOCK_SIZE)
+		for (auto i = 0u; i < known_primes.size(); i += THREAD_COUNT)
 		{
-			std::cout << "Calculating " << i << std::endl;
+			compute_log << "Calculating " << i << "\n";
 			SieveParams params{ result, offset, Array<uint32_t>::from_vector(known_primes), i };
-			THREADABLE_CALL(BLOCK_SIZE, sieve_host, params);
+			THREADABLE_CALL(THREAD_COUNT, sieve_host, params); //BLOCK_CLOUNT = 1
 		}
-		std::cout << "Calculation done" << std::endl;
+		compute_log << "Calculation done" << "\n";
 	}
 
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto calculationTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-	std::cout << "Calculation took " << calculationTime << "ms" << std::endl;
+	compute_log << "Calculation took " << calculationTime << "ms\n";
 }

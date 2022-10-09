@@ -3,10 +3,11 @@
 #include <iostream>
 #include "parameters.cuh"
 #include <math.h>
+#include "logger.h"
 
 std::vector<uint32_t> get_known_primes(size_t limit)
 {
-	std::cout << "Calculating base primes" << std::endl;
+	compute_log << "Calculating base primes\n";
 
 	auto knownPrimes = std::vector<uint32_t>();
 	knownPrimes.reserve(limit / static_cast<size_t>(log(limit)));
@@ -27,7 +28,7 @@ std::vector<uint32_t> get_known_primes(size_t limit)
 			knownPrimes.push_back(i);
 		}
 	}
-	std::cout << std::endl << "Base primes calculated, size: " << knownPrimes.size() << std::endl;
+	compute_log << "\nBase primes calculated, size: " << knownPrimes.size() << "\n";
 	return knownPrimes;
 }
 
