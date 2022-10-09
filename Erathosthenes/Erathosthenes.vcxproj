@@ -83,7 +83,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fastprintf.h" />
+    <ClInclude Include="file.h" />
     <ClInclude Include="known_primes.h" />
+    <ClInclude Include="multi_threaded_print.h" />
     <ClInclude Include="parameters.cuh" />
     <ClInclude Include="print.h" />
     <ClInclude Include="sieve.cuh" />

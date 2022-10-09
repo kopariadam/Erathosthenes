@@ -1,10 +1,9 @@
 #pragma once
-#include <fstream>
 #include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <string>
 #include "fastprintf.h"
+#include <memory>
+#include "file.h"
+#include "parameters.cuh"
 
 class FastStringStream
 {
@@ -40,7 +39,6 @@ class Printer
 {
 	static constexpr auto FILE_LENGHT = 1ll << 24;
 	static constexpr auto COUT_SAMPLING_RATE = 1ll << 24;
-	static constexpr auto FILE_PADDING = 4;
 
 	size_t count = 0ull;
 	bool coutPrint = false;
@@ -48,19 +46,19 @@ class Printer
 	bool needsToWriteToFile = false;
 	int fileIndex = 0;
 
+	std::unique_ptr<FileBase> fileMaker;
+
 public:
-	Printer()
+	Printer(std::unique_ptr<FileBase>&& file_maker = std::make_unique<SingleThreadedFile>()) : fileMaker(std::move(file_maker))
 	{
-		_wmkdir(L"../output");
+		fileMaker->makeFolder();
 	}
 	void writeToFile()
 	{
 		if (!needsToWriteToFile)
 			return;
 
-		std::stringstream ss;
-		ss << std::setw(FILE_PADDING) << std::setfill('0') << std::to_string(fileIndex);
-		std::ofstream file = std::ofstream("../output/prime_" + ss.str() + ".txt", std::ios_base::out | std::ios_base::binary);
+		auto file = fileMaker->makeFile(fileIndex);
 		file << cache.c_str();
 		file.close();
 		fileIndex++;
