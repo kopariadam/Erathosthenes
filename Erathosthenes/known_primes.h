@@ -37,7 +37,7 @@ void update_known_primes(std::vector<uint32_t>& known_primes, const Array<bool>&
 	known_primes.reserve(limit / static_cast<size_t>(log(limit)));
 	for (auto i = known_primes.back() + 2u; i < limit; i += 2u)
 	{
-		if (result[i])
+		if (result[i / 2u])
 			known_primes.push_back(i);
 	}
 }

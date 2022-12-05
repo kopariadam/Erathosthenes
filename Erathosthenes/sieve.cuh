@@ -11,27 +11,28 @@ struct SieveParams
 	Array<bool> result;
 	size_t offset;
 	const Array<uint32_t> knownPrimes;
-	size_t startingPrimeIdx;
+	uint32_t startingPrimeIdx;
 };
 
 __host__ __device__ void sieve_impl(const Dimensions& dimensions, SieveParams& params)
 {
 	UNPACK_DIMENSIONS(dimensions);
-	auto primeIdx = params.startingPrimeIdx + (size_t)blockDim.x * (size_t)threadIdx.y + (size_t)threadIdx.x;
+	auto primeIdx = params.startingPrimeIdx + blockDim.x * threadIdx.y + threadIdx.x;
 	if (primeIdx >= params.knownPrimes.size) return;
 	size_t step = params.knownPrimes[primeIdx];
+	if (step == 2ull) return;
 
 	size_t numberIdx = blockIdx.x;
-	auto numberBlockSize = params.result.size / gridDim.x;
+	auto numberBlockSize = 2ull * params.result.size / gridDim.x;
 	auto startingNumber = numberBlockSize * numberIdx + params.offset;
 	if (startingNumber > step)
-		startingNumber = ((startingNumber - 1ull) / step + 1ull) * step;
-	else
-		startingNumber = step * 2ull;
-	startingNumber -= params.offset;
-	auto endingNumber = numberBlockSize * (numberIdx + 1ull);
+		startingNumber = (((startingNumber - 1ull) / step + 1ull) | 1ull) * step;
+	startingNumber = max(startingNumber, step * step);
+	
+	auto startingIndex = (startingNumber - params.offset) / 2ull;
+	auto endingIndex = numberBlockSize * (numberIdx + 1ull) / 2ull;
 
-	for (auto i = startingNumber; i < endingNumber; i += step)
+	for (auto i = startingIndex; i < endingIndex; i += step)
 		params.result[i] = false;
 }
 
@@ -74,8 +75,8 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 			SieveParams params{ Array<bool>{cudaResult, result.size}, offset, Array<uint32_t>{cudaKnownPrimes, known_primes.size()}, i};
 			sieve_cuda <<< grid, block >>>(params);
 			CUDA_STATUS_CHECK(cudaGetLastError());
-			CUDA_STATUS_CHECK(cudaDeviceSynchronize());
 		}
+		CUDA_STATUS_CHECK(cudaDeviceSynchronize());
 		compute_log << "Calculation done\n";
 
 		compute_log << "Copying back result\n";
@@ -98,10 +99,7 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 		compute_log << "Calculation done" << "\n";
 	}
 	if (offset == 0ull)
-	{
 		result[0] = false;
-		result[1] = false;
-	}
 
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto calculationTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();

@@ -40,7 +40,9 @@ public:
 class SingleThreadedPrinter
 {
 	size_t count = 0ull;
+	#if COUT_SAMPLING
 	bool coutPrint = false;
+	#endif
 	FastStringStream cache{ FILE_LENGHT };
 	bool needsToWriteToFile = false;
 	int fileIndex = 0;
@@ -78,12 +80,14 @@ public:
 			count++;
 		}
 
-		auto index = get_index(offset + result.size);
+		auto index = get_index(offset + result.size * 2ull);
 
-		for (auto i = 1ull; i < result.size; i += 2)
+		for (auto i = 0ull; i < result.size; i++)
 		{
-			size_t number = i + offset;
+			size_t number = i * 2ull + 1ull + offset;
+			#if COUT_SAMPLING
 			if (number % COUT_SAMPLING_RATE == 1) coutPrint = true;
+			#endif
 			if (result[i])
 			{
 				count++;
@@ -95,6 +99,7 @@ public:
 					else
 						needsToWriteToFile = true;
 				}
+				#if COUT_SAMPLING
 				if (coutPrint)
 				{
 					coutPrint = false;
@@ -102,6 +107,7 @@ public:
 					fastsprintf(buffer, number, index);
 					printer_log << buffer;
 				}
+				#endif
 			}
 		}
 		printer_log << "\nPrinting done, count: " << count << "\n";

@@ -29,7 +29,7 @@ public:
 			Array<bool> threadResult;
 			threadResult.ptr = result.ptr + i * size;
 			threadResult.size = size;
-			size_t threadOffset = offset + i * size;
+			size_t threadOffset = offset + i * size * 2ull;
 			threads[i] = std::thread(print_part<print_to_file>, pass, i, threadResult, threadOffset);
 		}
 		pass++;
