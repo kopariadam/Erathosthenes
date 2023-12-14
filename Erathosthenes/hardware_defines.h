@@ -1,7 +1,7 @@
 #pragma once
 
 constexpr auto ARRAY_SIZE = 1ull << 32;
-constexpr auto THREAD_COUNT = 8;
+constexpr auto THREAD_COUNT = 16;
 constexpr auto BLOCK_COUNT = 1u << 16;
 constexpr auto BLOCK_SIZE = 32u;
 constexpr auto FILE_LENGHT = 1ll << 24;
