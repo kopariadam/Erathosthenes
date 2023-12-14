@@ -7,6 +7,8 @@
 
 int main()
 {
+	auto startTime = std::chrono::high_resolution_clock::now();
+
 	constexpr auto OFFSET_SIZE = ARRAY_SIZE * 2ull;
 	constexpr auto FINAL_NUMBER = OFFSET_SIZE * SIEVE_CALLS;
 
@@ -26,6 +28,10 @@ int main()
 	printer.writeToFile();
 	free(workingResult.ptr);
 	free(printingResult.ptr);
+
+	auto endTime = std::chrono::high_resolution_clock::now();
+	auto totalTime = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime).count();
+	main_log << "Total run took " << totalTime << "s\n";
 
 	return 0;
 }
