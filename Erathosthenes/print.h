@@ -13,11 +13,11 @@ class FastStringStream
 	char* end;
 
 public:
-	static constexpr auto OVER_RESERVE = 65ull;
+	static constexpr auto OVER_RESERVE = 21ull;
 
 	FastStringStream(size_t size)
 	{
-		cache.resize(size + OVER_RESERVE);
+		cache.resize(size);
 		reset();
 	}
 
