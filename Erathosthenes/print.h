@@ -54,6 +54,7 @@ public:
 	{
 		fileMaker->makeFolder();
 	}
+	size_t getCount() { return count; }
 	void writeToFile()
 	{
 		if (!needsToWriteToFile)
