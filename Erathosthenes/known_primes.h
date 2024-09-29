@@ -32,7 +32,7 @@ std::vector<uint32_t> get_known_primes(size_t limit)
 	return knownPrimes;
 }
 
-void update_known_primes(std::vector<uint32_t>& known_primes, const Array<bool>& result, size_t limit)
+void update_known_primes(std::vector<uint32_t>& known_primes, const ResultArray& result, size_t limit)
 {
 	known_primes.reserve(limit / static_cast<size_t>(log(limit)));
 	for (auto i = known_primes.back() + 2u; i < limit; i += 2u)

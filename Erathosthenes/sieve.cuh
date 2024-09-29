@@ -8,7 +8,7 @@
 
 struct SieveParams
 {
-	Array<bool> result;
+	ResultArray result;
 	size_t offset;
 	const Array<uint32_t> knownPrimes;
 	uint32_t startingPrimeIdx;
@@ -49,7 +49,7 @@ THREADABLE_FUNCTION_START(sieve_host, SieveParams params)
 THREADABLE_FUNCTION_END
 
 template<bool gpu_enabled>
-void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_primes)
+void sieve(ResultArray result, size_t offset, Array<uint32_t>& known_primes)
 {
 	auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -59,20 +59,20 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 		cudaSetDevice(0);
 
 		uint32_t* cudaKnownPrimes;
-		CUDA_STATUS_CHECK(cudaMalloc(&cudaKnownPrimes, known_primes.size() * sizeof(known_primes[0])));
-		CUDA_STATUS_CHECK(cudaMemcpy(cudaKnownPrimes, known_primes.data(), known_primes.size() * sizeof(known_primes[0]), cudaMemcpyHostToDevice));
+		CUDA_STATUS_CHECK(cudaMalloc(&cudaKnownPrimes, known_primes.memory));
+		CUDA_STATUS_CHECK(cudaMemcpy(cudaKnownPrimes, known_primes.ptr, known_primes.memory, cudaMemcpyHostToDevice));
 
-		bool* cudaResult;
-		CUDA_STATUS_CHECK(cudaMalloc(&cudaResult, result.size));
-		CUDA_STATUS_CHECK(cudaMemset(cudaResult, 1, result.size * sizeof(result[0])));
+		void* cudaResult;
+		CUDA_STATUS_CHECK(cudaMalloc(&cudaResult, result.memory));
+		CUDA_STATUS_CHECK(cudaMemset(cudaResult, 0xff, result.memory));
 		compute_log << "Arrays copied to GPU\n";
 
-		for (auto i = 0u; i < known_primes.size(); i += BLOCK_SIZE * BLOCK_SIZE)
+		for (auto i = 0u; i < known_primes.size; i += BLOCK_SIZE * BLOCK_SIZE)
 		{
 			compute_log << "Calculating " << i << "\n";
 			auto grid = dim3(BLOCK_COUNT);
 			auto block = dim3(BLOCK_SIZE, BLOCK_SIZE);
-			SieveParams params{ Array<bool>{cudaResult, result.size}, offset, Array<uint32_t>{cudaKnownPrimes, known_primes.size()}, i};
+			SieveParams params{ ResultArray::from_malloc(cudaResult, result.memory), offset, Array<uint32_t>::from_carray(cudaKnownPrimes, known_primes.size), i };
 			sieve_cuda <<< grid, block >>>(params);
 			CUDA_STATUS_CHECK(cudaGetLastError());
 		}
@@ -80,7 +80,7 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 		compute_log << "Calculation done\n";
 
 		compute_log << "Copying back result\n";
-		CUDA_STATUS_CHECK(cudaMemcpy(result.ptr, cudaResult, result.size * sizeof(result[0]), cudaMemcpyDeviceToHost));
+		CUDA_STATUS_CHECK(cudaMemcpy(result.ptr, cudaResult, result.memory, cudaMemcpyDeviceToHost));
 		compute_log << "Copying back done\n";
 
 		CUDA_STATUS_CHECK(cudaFree(cudaKnownPrimes));
@@ -89,11 +89,11 @@ void sieve(Array<bool> result, size_t offset, std::vector<uint32_t>& known_prime
 	}
 	else
 	{
-		memset(result.ptr, 1, result.size * sizeof(result[0]));
-		for (auto i = 0u; i < known_primes.size(); i += THREAD_COUNT)
+		memset(result.ptr, 0xff, result.memory);
+		for (auto i = 0u; i < known_primes.size; i += THREAD_COUNT)
 		{
 			compute_log << "Calculating " << i << "\n";
-			SieveParams params{ result, offset, Array<uint32_t>::from_vector(known_primes), i };
+			SieveParams params{ result, offset, known_primes, i };
 			THREADABLE_CALL(THREAD_COUNT, sieve_host, params); //BLOCK_CLOUNT = 1
 		}
 		compute_log << "Calculation done" << "\n";

@@ -1,7 +1,8 @@
 #pragma once
 
+#define USE_BITS 1
 constexpr auto GPU_ENABLED = true;
-constexpr auto PRINT_TO_FILE = true;
+constexpr auto PRINT_TO_FILE = false;
 constexpr auto SIEVE_CALLS = 16ull;
 
 #define MULTI_THREADED_PRINTER 1

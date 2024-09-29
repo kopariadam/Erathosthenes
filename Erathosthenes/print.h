@@ -69,7 +69,7 @@ public:
 	}
 
 	template<bool print_to_file>
-	void print(const Array<bool> result, size_t offset)
+	void print(const ResultArray result, size_t offset)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 		printer_log << "Printing results to file\n";

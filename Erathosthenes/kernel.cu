@@ -9,17 +9,17 @@ int main()
 {
 	auto startTime = std::chrono::high_resolution_clock::now();
 
-	constexpr auto OFFSET_SIZE = ARRAY_SIZE * 2ull;
+	constexpr auto OFFSET_SIZE = ARRAY_SIZE * 2ull * ResultArray::value_per_byte();
 	constexpr auto FINAL_NUMBER = OFFSET_SIZE * SIEVE_CALLS;
 
 	auto knownPrimes = get_known_primes(two_factor_sqrt(OFFSET_SIZE));
-	Array<bool> workingResult{ (bool*)malloc(ARRAY_SIZE), ARRAY_SIZE };
-	Array<bool> printingResult{ (bool*)malloc(ARRAY_SIZE), ARRAY_SIZE };
+	auto workingResult = ResultArray::from_malloc(malloc(ARRAY_SIZE), ARRAY_SIZE);
+	auto  printingResult = ResultArray::from_malloc(malloc(ARRAY_SIZE), ARRAY_SIZE);
 	Printer printer;
 	for (auto offset = 0ull; offset < FINAL_NUMBER; offset += OFFSET_SIZE)
 	{
 		main_log << "\nSIEVE CALL " << (offset / OFFSET_SIZE + 1ull) << " OUT OF " << SIEVE_CALLS << "\n";
-		sieve<GPU_ENABLED>(workingResult, offset, knownPrimes);
+		sieve<GPU_ENABLED>(workingResult, offset, Array<uint32_t>::from_vector(knownPrimes));
 		if (offset == 0ull)
 			update_known_primes(knownPrimes, workingResult, two_factor_sqrt(FINAL_NUMBER));
 		std::swap(workingResult, printingResult);

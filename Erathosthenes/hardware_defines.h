@@ -5,7 +5,7 @@ constexpr auto THREAD_COUNT = 16;
 constexpr auto BLOCK_COUNT = 1u << 16;
 constexpr auto BLOCK_SIZE = 32u;
 constexpr auto FILE_LENGHT = 1ll << 24;
-constexpr auto FILE_PADDING = 2;
+constexpr auto FILE_PADDING = 3;
 
 constexpr size_t two_factor_sqrt(size_t n, size_t s = 0)
 {
