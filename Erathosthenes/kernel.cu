@@ -11,6 +11,7 @@ int main()
 
 	constexpr auto OFFSET_SIZE = ARRAY_SIZE * 2ull * ResultArray::value_per_byte();
 	constexpr auto FINAL_NUMBER = OFFSET_SIZE * SIEVE_CALLS;
+	main_log << "Calculating primes less than " << FINAL_NUMBER << " = 2^" << log2(FINAL_NUMBER) << "\n";
 
 	auto knownPrimes = get_known_primes(two_factor_sqrt(OFFSET_SIZE));
 	auto workingResult = ResultArray::from_malloc(malloc(ARRAY_SIZE), ARRAY_SIZE);

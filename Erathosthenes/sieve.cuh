@@ -69,7 +69,6 @@ void sieve(ResultArray result, size_t offset, Array<uint32_t>& known_primes)
 
 		for (auto i = 0u; i < known_primes.size; i += BLOCK_SIZE * BLOCK_SIZE)
 		{
-			compute_log << "Calculating " << i << "\n";
 			auto grid = dim3(BLOCK_COUNT);
 			auto block = dim3(BLOCK_SIZE, BLOCK_SIZE);
 			SieveParams params{ ResultArray::from_malloc(cudaResult, result.memory), offset, Array<uint32_t>::from_carray(cudaKnownPrimes, known_primes.size), i };

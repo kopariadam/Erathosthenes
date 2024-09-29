@@ -20,3 +20,9 @@ constexpr int get_padding(int n, int p = 1, int s = 10)
 	if (s > n) return p;
 	return get_padding(n, p + 1, s * 10);
 }
+
+constexpr size_t log2(size_t n, size_t e = 0ull)
+{
+	if (n <= 1ull << e) return e;
+	return log2(n, e + 1);
+}
