@@ -27,7 +27,7 @@ struct Array
 	const Array subarray(size_t offset, size_t _size) const { return { ptr + offset, _size, _size * sizeof(T) }; }
 	__host__ __device__ Access operator[](size_t i) { return ptr[i]; }
 	__host__ __device__ const Access operator[](size_t i) const { return ptr[i]; }
-	constexpr static size_t value_per_byte() { return 0ull; }
+	constexpr static size_t value_per_byte() { static_assert(false, "value_per_byte is only available for BoolArray and BitArray!"); return 0ull; }
 };
 
 struct Bits
@@ -47,36 +47,49 @@ struct Bits
 		}
 	};
 };
+static_assert(sizeof(Bits) * CHAR_BIT == 32, "Bits needs to be 32 bits!");
+
+using BoolArray = Array<bool>;
+using BitArray = Array<Bits, Bits::BitAccess>;
 
 template<>
-constexpr size_t Array<Bits, Bits::BitAccess>::value_per_byte() { return 8ull; }
+constexpr size_t BitArray::value_per_byte() { return 8ull; }
 template<>
-constexpr size_t Array<bool>::value_per_byte() { return 1ull; }
+constexpr size_t BoolArray::value_per_byte() { return 1ull; }
 
 template<>
-Array<Bits, Bits::BitAccess> Array<Bits, Bits::BitAccess>::from_malloc(void* ptr, size_t memory) 
+BitArray BitArray::from_vector(std::vector<Bits>& vec)
 { 
-	return { reinterpret_cast<Bits*>(ptr), static_cast<size_t>(memory * Array<Bits, Bits::BitAccess>::value_per_byte()), memory }; 
+	return { vec.data(), vec.size() * 32ull, vec.size() * sizeof(Bits) };
 }
 template<>
-Array<Bits, Bits::BitAccess> Array<Bits, Bits::BitAccess>::subarray(size_t offset, size_t _size) 
+BitArray BitArray::from_carray(Bits* ptr, size_t size)
 { 
-	return { reinterpret_cast<Bits*>(reinterpret_cast<bool*>(ptr) + offset / Array<Bits, Bits::BitAccess>::value_per_byte()), _size, _size / Array<Bits, Bits::BitAccess>::value_per_byte() };
+	return { ptr, size * 32ull, size * sizeof(Bits) };
 }
 template<>
-const Array<Bits, Bits::BitAccess> Array<Bits, Bits::BitAccess>::subarray(size_t offset, size_t _size) const 
+BitArray BitArray::from_malloc(void* ptr, size_t memory)
+{ 
+	return { reinterpret_cast<Bits*>(ptr), static_cast<size_t>(memory * BitArray::value_per_byte()), memory };
+}
+template<>
+BitArray BitArray::subarray(size_t offset, size_t _size)
+{ 
+	return { reinterpret_cast<Bits*>(reinterpret_cast<bool*>(ptr) + offset / BitArray::value_per_byte()), _size, _size / BitArray::value_per_byte() };
+}
+template<>
+const BitArray BitArray::subarray(size_t offset, size_t _size) const
 {
-	return { reinterpret_cast<Bits*>(reinterpret_cast<bool*>(ptr) + offset / Array<Bits, Bits::BitAccess>::value_per_byte()), _size, _size / Array<Bits, Bits::BitAccess>::value_per_byte() };
+	return { reinterpret_cast<Bits*>(reinterpret_cast<bool*>(ptr) + offset / BitArray::value_per_byte()), _size, _size / BitArray::value_per_byte() };
 }
 
-static_assert(sizeof(Bits) == sizeof(uint32_t), "Bits needs to be 32 bits!!!");
 template<>
-__host__ __device__ Bits::BitAccess Array<Bits, Bits::BitAccess>::operator[](size_t i) { return { &ptr[i / 32ull].data, i % 32ull }; }
+__host__ __device__ Bits::BitAccess BitArray::operator[](size_t i) { return { &ptr[i / 32ull].data, i % 32ull }; }
 template<>
-__host__ __device__ const Bits::BitAccess Array<Bits, Bits::BitAccess>::operator[](size_t i) const { return { &ptr[i / 32ull].data, i % 32ull }; }
+__host__ __device__ const Bits::BitAccess BitArray::operator[](size_t i) const { return { &ptr[i / 32ull].data, i % 32ull }; }
 
 #if USE_BITS
-using ResultArray = Array<Bits, Bits::BitAccess>;
+using ResultArray = BitArray;
 #else
-using ResultArray = Array<bool>;
+using ResultArray = BoolArray;
 #endif
