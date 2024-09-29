@@ -1,6 +1,7 @@
 #pragma once
 #include "cuda_runtime.h"
 #include <vector>
+#include "interlocked.cuh"
 
 struct Dimensions
 {
@@ -37,28 +38,12 @@ struct Bits
 		long* data;
 		size_t offset;
 		operator bool() const { return static_cast<bool>(*data & 1u << offset); }
-		__host__ __device__ void interlocked_and(long v)
-		{
-#ifdef __CUDA_ARCH__
-			atomicAnd(reinterpret_cast<int*>(data), v);
-#else
-			_InterlockedAnd(data, v);
-#endif
-		}
-		__host__ __device__ void interlocked_or(long v)
-		{
-#ifdef __CUDA_ARCH__
-			atomicOr(reinterpret_cast<int*>(data), v);
-#else
-			_InterlockedOr(data, v);
-#endif
-		}
 		__host__ __device__ void operator=(bool v)
 		{
 			if (v) 
-				interlocked_or(1u << offset);
+				interlocked_or(data, 1u << offset);
 			else 
-				interlocked_and(~(1u << offset));
+				interlocked_and(data, ~(1u << offset));
 		}
 	};
 };

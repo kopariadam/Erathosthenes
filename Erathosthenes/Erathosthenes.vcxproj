@@ -86,6 +86,7 @@
     <ClInclude Include="fastprintf.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="hardware_defines.h" />
+    <ClInclude Include="interlocked.cuh" />
     <ClInclude Include="known_primes.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="multi_threaded_print.h" />
